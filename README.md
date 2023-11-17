@@ -26,7 +26,6 @@
   - tqdm==4.64.1
   - transformers==4.22.2
   - ttkbootstrap==1.10.1 
-
 ``` 
 # 安装指令：
 pip install -r requirement.txt
@@ -57,9 +56,9 @@ $ python build_data.py
 
 
 ### 快速运行
-- 完成数据预处理和预训练模型的下载之后可以下载我们已经训练完成的模型进行快速复现。 [下载地址]() 将下载的模型放入 Exps/ 文件夹下，并修改配置 json 文件中的预训练模型路径和模型路径
+- 完成数据预处理和预训练模型的下载之后可以下载我们已经训练完成的模型进行快速复现。【 [下载地址](https://pan.baidu.com/s/1MS1lLPiE6kTMw-CIzbi8bg?pwd=XATU)】 将下载的模型放入 Exps/ 文件夹下，并修改配置 json 文件中的预训练模型路径和模型路径
 - 批量的运行在 scripts/ 文件夹下，修改 run_Fin-PTPCG.sh 和 run_Fin-PTPCG_dueefin.sh 脚本文件中的预训练模型路径和任务名称(TASK_NAME，应和模型 json 配置文件中保持一致)，将skip_train参数设置为True，然后分别运行对应的脚本。
-- 对单文件的抽取运行应修改 app1.py 中 extract 函数中的预训练模型和模型路径后运行 app1.py ``` python app1.py ```
+- 对单文件的抽取运行应修改 app1.py 中 extract() 函数中的预训练模型和模型路径后运行 app1.py ``` python app1.py ```
 
 
 ### 模型训练
@@ -76,3 +75,8 @@ $ tail -f Logs/Fin-PTPCG_ChFinAnn.log
 $ nohup bash scripts/run_Fin-PTPCG_dueefin.sh 1>Logs/Fin-PTPCG_Dueefin.log 2>&1 &
 $ tail -f Logs/Fin-PTPCG_Dueefin.log
 ```
+
+
+## 历史更新
+- **2023年11月17日** v0.1
+  - 1.上传本项目代码，当前版本**尚未**实现下载新闻的可视化界面，app 的后续正在开发中。
