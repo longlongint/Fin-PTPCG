@@ -24,7 +24,7 @@
         echo "Task $TASK_NAME started."
         CUDA_VISIBLE_DEVICES=${GPUS} python -u run_dee_task.py \
             --use_bert=True \
-            --bert_model='G:/Pretrain_model/pytorch/chinese-roberta-wwm-ext' \
+            --bert_model='G:/Pretrain_model/pytorch/finbert-base-chinese' \
             --seed=99 \
             --task_name=${TASK_NAME} \
             --model_type=${MODEL_NAME} \
