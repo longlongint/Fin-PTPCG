@@ -26,7 +26,7 @@
   - tqdm==4.64.1
   - transformers==4.22.2
   - ttkbootstrap==1.10.1 
-``` 
+``` bash
 # 安装指令：
 pip install -r requirement.txt
 ```
