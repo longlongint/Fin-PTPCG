@@ -3,10 +3,23 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from ttkbootstrap.scrolled import ScrolledText
 from tkinter import filedialog
+from tkinter import messagebox
 import os
 from dee.tasks import DEETask, DEETaskSetting
-from crawler.run_crawler import crawler
+import crawler.run_crawler as clr
+import subprocess
 import sys
+import json
+
+
+def get_all_items(directory_path):
+    try:
+        # 获取指定路径下的所有文件和文件夹名，并返回完整路径
+        all_items = [os.path.join(directory_path, item) for item in os.listdir(directory_path)]
+        return all_items
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return []
 
 
 def extract(doc, dataset, mode):
@@ -46,7 +59,7 @@ def extract(doc, dataset, mode):
         bert_model_dir = r"G:/Pretrain_model/pytorch/chinese-roberta-wwm-ext"
         if dataset == 'Ch-Fin-Ann':
             task_dir = "Exps/PTPCG_RoBERTa_wwm"
-            resume = 51  # 测试用，待修改
+            resume = 51
         elif dataset == 'Duee-Fin':
             task_dir = "Exps/RoBERTa_wwm_dueefin"
             resume = 92
@@ -80,6 +93,10 @@ def extract(doc, dataset, mode):
     return results
 
 
+global dat
+global items
+global index
+index = 0
 root = ttk.Window(
         title="Fin-PTPCG事件抽取",        # 设置窗口的标题
         themename="litera",     # 设置主题
@@ -93,6 +110,7 @@ root = ttk.Window(
 crawler_window = ttk.Frame(root)
 main_window = ttk.Frame(root)
 auto_window = ttk.Frame(root)
+train_window = ttk.Frame(root)
 cur_frame = 0
 
 #  文本框
@@ -159,6 +177,8 @@ def submit():
         st2.delete("0.0", 'end')
         input_value = st.get(1.0, "end")
         input_value = input_value.replace("(以上内容每个颜色的标注代表一个事件的论元，这种颜色的标注代表多个事件的共享论元)", "")
+        if len(input_value) <= 1:  # 输入为空
+            messagebox.showinfo("输入为空", "请输入待处理的文本！")
         st.delete("0.0", 'end')
         dataset_value = dataset.get()
         mode_value = mode.get()
@@ -214,12 +234,16 @@ def submit():
         auto_st2.delete("0.0", 'end')
         input_value = auto_st.get(1.0, "end")
         input_value = input_value.replace("(以上内容每个颜色的标注代表一个事件的论元，这种颜色的标注代表多个事件的共享论元)", "")
+        if len(input_value) <= 1:  # 输入为空
+            messagebox.showinfo("输入为空", "请输入待处理的文本！")
         auto_st.delete("0.0", 'end')
         dataset_value = auto_dataset.get()
         mode_value = auto_mode.get()
 
         # 在结果展示框中显示输入框和下拉选项框中的值
         res = extract(input_value, dataset_value, mode_value)
+        global dat
+        dat = res
         # print(res)
         mspans = res["comments"]["mspans"]
         sentences = res["comments"]["sentences"]
@@ -275,12 +299,40 @@ def clear():
         auto_st2.delete("0.0", 'end')
 
 
+def train_again():
+    sh_file_path = r'G:\graduate\DocEE-main\scripts\run_main.sh'
+    subprocess.run(['bash', sh_file_path])
+
+
 def add_training():
-    pass
+    # 指定要追加数据的JSON文件路径
+    json_file_path = r"G:\graduate\DocEE-main\Data\new\new_data.json"
+
+    # 使用with语句打开文件，确保文件操作完成后正确关闭文件
+    with open(json_file_path, 'a', encoding='utf-8') as json_file:
+        # 使用json.dump将数据写入文件
+        global dat
+        json.dump(dat, json_file, ensure_ascii=False)
+        # 写入一个换行，以确保下一个JSON对象在新行开始
+        json_file.write('\n')
+
+    auto_st.delete("0.0", 'end')
+    auto_st2.delete("0.0", 'end')
+    global index
+    if index < len(items):
+        index = index + 1
+        f = open(items[index], encoding="GB18030")
+        auto_st.insert(END, f.read())
 
 
 def ignore_add():
-    pass
+    auto_st.delete("0.0", 'end')
+    auto_st2.delete("0.0", 'end')
+    global index
+    if index < len(items):
+        index = index + 1
+        f = open(items[index], encoding="GB18030")
+        auto_st.insert(END, f.read())
 
 
 ttk.Button(master=main_window,
@@ -402,52 +454,20 @@ st.tag_configure("event12", foreground="#F9ECDF", background="#825855")
 st.tag_configure("share", foreground="#000000", background="#F0DAD2")
 
 
-crawler_lab0 = ttk.Label(crawler_window, text='爬虫参数设置：')
-crawler_lab0.grid(row=0, column=0, padx=30, pady=5, sticky="nsew")
-crawler_lab1 = ttk.Label(crawler_window, text='爬取新闻条数：')
-crawler_lab1.grid(row=1, column=0, padx=30, pady=5, sticky="nsew")
-crawler_entry1 = ttk.Entry(crawler_window, width=50, bootstyle=PRIMARY)
-crawler_entry1.grid(row=1, column=1, padx=30, pady=5, sticky="nsew")
-crawler_lab2 = ttk.Label(crawler_window, text='是否生成txt文件：')
-crawler_lab2.grid(row=2, column=0, padx=30, pady=5, sticky="nsew")
-crawler_entry2 = ttk.Entry(crawler_window, width=50, bootstyle=PRIMARY)
-crawler_entry2.grid(row=2, column=1, padx=30, pady=5, sticky="nsew")
-crawler_lab3 = ttk.Label(crawler_window, text='默认路径：')
-crawler_lab3.grid(row=3, column=0, padx=30, pady=5, sticky="nsew")
-crawler_entry3 = ttk.Entry(crawler_window, width=50, bootstyle=PRIMARY)
-crawler_entry3.grid(row=3, column=1, padx=30, pady=5, sticky="nsew")
-crawler_entry3.insert('0', r'G://graduate//DocEE-main//crawler//data')
-crawler_text = ttk.ScrolledText(crawler_window, wrap=tk.WORD)
-ttk.Button(master=crawler_window,
-           text="开始爬取",
-           bootstyle=(INFO, OUTLINE),
-           command=clear).grid(row=4, column=0, padx=5, pady=5, sticky=W)
-crawler_text.grid(row=5, column=0, columnspan=3, padx=30, pady=5, sticky="nsew")
-
-
-# 输出重定向至文本框
-def redirect_stdout_to_textbox():
-    class StdoutRedirector:
-        def __init__(self, text_widget):
-            self.text_widget = text_widget
-
-        def write(self, text):
-            self.text_widget.insert(ttk.END, text)
-            self.text_widget.see(ttk.END)  # 滚动文本框以显示最新的输出
-
-    stdout_redirector = StdoutRedirector(crawler_text)
-    sys.stdout = stdout_redirector  # 重定向标准输出
-
-
 def start_crawler():
-    redirect_stdout_to_textbox()
-    print("test")
-    crawler()
+    clr.tp = crawler_entry1.get()
+    if crawler_cbo2.get() == "True":
+        clr.istxt = True
+    else:
+        clr.istxt = False
+    clr.pth = crawler_entry3.get()
+    clr.crawler()
 
 
 def app_extraction():
     crawler_window.grid_remove()
     auto_window.grid_remove()
+    train_window.grid_remove()
     main_window.grid()
     global cur_frame
     cur_frame = 0
@@ -456,6 +476,7 @@ def app_extraction():
 def app_crawler():
     main_window.grid_remove()
     auto_window.grid_remove()
+    train_window.grid_remove()
     crawler_window.grid()
     global cur_frame
     cur_frame = 1
@@ -464,9 +485,22 @@ def app_crawler():
 def auto_extraction():
     crawler_window.grid_remove()
     main_window.grid_remove()
+    train_window.grid_remove()
     auto_window.grid()
     global cur_frame
     cur_frame = 2
+    directory_path = r"G:\金融竞赛\dataset\利空\\"
+    global items
+    items = get_all_items(directory_path)
+
+
+def train_model():
+    crawler_window.grid_remove()
+    main_window.grid_remove()
+    auto_window.grid_remove()
+    train_window.grid()
+    global cur_frame
+    cur_frame = 3
 
 
 #  顶部菜单拦
@@ -481,6 +515,82 @@ def open_file():   # 导入文件函数
         auto_st.insert(END, f.read())
 
 
+crawler_lab0 = ttk.Label(crawler_window, text='爬虫参数设置：')
+crawler_lab0.grid(row=0, column=0, padx=30, pady=5, sticky="nsew")
+crawler_lab1 = ttk.Label(crawler_window, text='爬取新闻条数：')
+crawler_lab1.grid(row=1, column=0, padx=30, pady=5, sticky="nsew")
+crawler_entry1 = ttk.Entry(crawler_window, width=50, bootstyle=PRIMARY)
+crawler_entry1.grid(row=1, column=1, padx=30, pady=5, sticky="nsew")
+crawler_lab2 = ttk.Label(crawler_window, text='是否生成txt文件：')
+crawler_lab2.grid(row=2, column=0, padx=30, pady=5, sticky="nsew")
+# crawler_entry2 = ttk.Entry(crawler_window, width=50, bootstyle=PRIMARY)
+# crawler_entry2.grid(row=2, column=1, padx=30, pady=5, sticky="nsew")
+crawler_cbo2 = ttk.Combobox(
+            master=crawler_window,
+            textvariable="True",
+            bootstyle=PRIMARY,
+            # font=("Times New Roman", 12),
+            values=["True", "False"]
+        )
+crawler_cbo2.grid(row=2, column=1, padx=30, pady=5, sticky="nsew")
+crawler_lab3 = ttk.Label(crawler_window, text='默认路径：')
+crawler_lab3.grid(row=3, column=0, padx=30, pady=5, sticky="nsew")
+crawler_entry3 = ttk.Entry(crawler_window, width=50, bootstyle=PRIMARY)
+crawler_entry3.grid(row=3, column=1, padx=30, pady=5, sticky="nsew")
+crawler_entry3.insert('0', r'G://graduate//DocEE-main//crawler//data')
+# crawler_text = ttk.ScrolledText(crawler_window, wrap=tk.WORD)
+ttk.Button(master=crawler_window,
+           text="开始爬取",
+           bootstyle=(INFO, OUTLINE),
+           command=start_crawler).grid(row=4, column=0, padx=5, pady=5, sticky=W)
+# crawler_text.grid(row=5, column=0, columnspan=3, padx=30, pady=5, sticky="nsew")
+
+train_lab0 = ttk.Label(train_window, text='训练参数设置：')
+train_lab0.grid(row=0, column=0, padx=30, pady=5, sticky="nsew")
+'''
+train_lab1 = ttk.Label(train_window, text='训练事件类型数：')
+train_lab1.grid(row=1, column=0, padx=30, pady=5, sticky="nsew")
+train_cbo1 = ttk.Combobox(
+            master=train_window,
+            textvariable=dataset,
+            bootstyle=PRIMARY,
+            # font=("Times New Roman", 12),
+            values=["5类事件", "13类事件"]
+        )
+train_cbo1.current(1)
+train_cbo1.grid(row=1, column=1, padx=30, pady=5, sticky="nsew")
+'''
+train_lab2 = ttk.Label(train_window, text='Epoch数：')
+train_lab2.grid(row=2, column=0, padx=30, pady=5, sticky="nsew")
+train_entry2 = ttk.Entry(train_window, width=50, bootstyle=PRIMARY)
+train_entry2.grid(row=2, column=1, padx=30, pady=5, sticky="nsew")
+
+train_lab3 = ttk.Label(train_window, text='batch size：')
+train_lab3.grid(row=3, column=0, padx=30, pady=5, sticky="nsew")
+train_entry3 = ttk.Entry(train_window, width=50, bootstyle=PRIMARY)
+train_entry3.grid(row=3, column=1, padx=30, pady=5, sticky="nsew")
+
+train_lab4 = ttk.Label(train_window, text='learning rate：')
+train_lab4.grid(row=4, column=0, padx=30, pady=5, sticky="nsew")
+train_entry4 = ttk.Entry(train_window, width=50, bootstyle=PRIMARY)
+train_entry4.grid(row=4, column=1, padx=30, pady=5, sticky="nsew")
+
+train_lab5 = ttk.Label(train_window, text='dropout：')
+train_lab5.grid(row=5, column=0, padx=30, pady=5, sticky="nsew")
+train_entry5 = ttk.Entry(train_window, width=50, bootstyle=PRIMARY)
+train_entry5.grid(row=5, column=1, padx=30, pady=5, sticky="nsew")
+
+train_lab6 = ttk.Label(train_window, text='模型triggers个数：')
+train_lab6.grid(row=6, column=0, padx=30, pady=5, sticky="nsew")
+train_entry6 = ttk.Entry(train_window, width=50, bootstyle=PRIMARY)
+train_entry6.grid(row=6, column=1, padx=30, pady=5, sticky="nsew")
+
+ttk.Button(master=train_window,
+           text="开始训练",
+           bootstyle=(INFO, OUTLINE),
+           command=train_again).grid(row=9, column=1, padx=0, pady=5, sticky=W)
+
+
 menubar = ttk.Menu(root)  # 创建顶层菜单
 filemenu1 = ttk.Menu(menubar)  # 创建子菜单
 menubar.add_cascade(label='文件', menu=filemenu1)  # 关联级联菜单
@@ -491,6 +601,7 @@ menubar.add_cascade(label='模式选择', menu=filemenu2)  # 关联级联菜单
 filemenu2.add_command(label='单篇抽取模式', command=app_extraction)  # 子菜单中添加菜单项
 filemenu2.add_command(label='爬虫模式', command=app_crawler)  # 子菜单中添加菜单项
 filemenu2.add_command(label='自动抽取模式', command=auto_extraction)  # 子菜单中添加菜单项
+filemenu2.add_command(label='模型训练', command=train_model)  # 子菜单中添加菜单项
 root.config(menu=menubar)  # 关联窗口
 
 main_window.grid()
@@ -560,6 +671,5 @@ ttk.Button(master=auto_window,
            text="不赞同",
            bootstyle=(DANGER, OUTLINE),
            command=ignore_add).grid(row=6, column=3, padx=0, pady=5, sticky=W)
-
 
 root.mainloop()
