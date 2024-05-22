@@ -12,8 +12,9 @@ def set_args():
 
 
 def crawler():import argparse
-from crawler.sina_news import sinanews
 
+
+from crawler.sina_news import sinanews
 global tp
 global istxt
 global pth

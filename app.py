@@ -97,6 +97,7 @@ global dat
 global items
 global index
 index = 0
+
 root = ttk.Window(
         title="Fin-PTPCG事件抽取",        # 设置窗口的标题
         themename="litera",     # 设置主题
